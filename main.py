@@ -1,5 +1,9 @@
 from tkinter import *
 from tkinter.colorchooser import askcolor
+from tkinter import filedialog
+from tkinter.ttk import Combobox
+from PIL import Image, ImageGrab,ImageTk  # Agrega la importación de ImageGrab
+
 
 root = Tk()
 root.title("Vangogh")
@@ -9,20 +13,63 @@ root.geometry("1300x600")
 
 lapizOn = True
 gomaOn = False
+paletaOn = False
+archivoOn = False
 
 # Creacion de las funciones abrir archivo y nuevo archivo
 
-def abrirArchivo():
-    pass
+def abrirArchivo(canva):
+    global archivoOn
+    if archivoOn == False:
+        archivoOn = True
+
+    file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.gif *.bmp *.ppm *.pgm")])
+    if file_path:
+        imagen = Image.open(file_path)
+        imagen = ImageTk.PhotoImage(imagen)
+        canva.create_image(0, 0, anchor=NW, image=imagen)
+        # Almacenamos la imagen como una propiedad del marco (Frame2) para evitar que se elimine
+        canva.imagen = imagen
+        global paletaOn
+        if paletaOn == True:
+            canvas.grid(row=0, column=1) 
+        else:
+            canvas.grid(row=0, column=0) 
+        canva.tag_lower(imagen)
+
+
 def nuevoArchivo():
     pass
 
 # Creacion de las finciones de guardar archivo y guardar como
 
-def guardarArchivo():
-    pass
-def guardarComo():
-    pass
+def guardarArchivo(canvas):
+    print("Guardando")
+    file_path = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPG files", "*.jpg")])
+    if file_path:
+        x = canvas.winfo_rootx()
+        y = canvas.winfo_rooty()
+        x1 = x + canvas.winfo_width()
+        y1 = y + canvas.winfo_height()
+        image = ImageGrab.grab((x, y, x1, y1))
+        image.save(file_path)
+
+def guardarComo(canvas):
+    print("Guardadno como")
+    file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("JPG files", "*.jpg")])
+    if file_path:
+        extension = file_path.split('.')[-1].lower()
+
+        x = canvas.winfo_rootx()
+        y = canvas.winfo_rooty()
+        x1 = x + canvas.winfo_width()
+        y1 = y + canvas.winfo_height()
+        image = ImageGrab.grab((x, y, x1, y1))
+
+        if extension == "jpg":
+            image = image.convert("RGB")
+
+        image.save(file_path)
 
 # Creacion de la funcion de rehacer y deshacer
 
@@ -45,11 +92,11 @@ menubar.add_cascade(label="Guardar",menu=save_menu)
 menubar.add_command(label="Deshacer cambio", command=deshacerCambio)
 menubar.add_command(label="Rehacer cambio",command=rehacerCambio)
 
-file_menu.add_command(label="Abrir archivo",command=abrirArchivo)
-file_menu.add_command(label="Nuevo archivo",command=nuevoArchivo)
+file_menu.add_command(label="Abrir archivo",command=lambda: abrirArchivo(canvas))
+file_menu.add_command(label="Nuevo archivo",command=lambda: nuevoArchivo(canvas))
 
-save_menu.add_command(label="Guardar",command=guardarArchivo)
-save_menu.add_command(label="Guardar como",command=guardarComo)
+save_menu.add_command(label="Guardar",command=lambda: guardarArchivo(canvas))
+save_menu.add_command(label="Guardar como",command=lambda: guardarComo(canvas))
 
 # Crear la barra de herramientas
 
@@ -189,6 +236,7 @@ def seleccionColor20():
 
 # Funcion Lapiz
 def on_buttonLapiz_click():
+    canvas.unbind("<Button-1>")  # Desvincular otros eventos
     print("Lapiz")
     global gomaOn
     global lapizOn
@@ -225,13 +273,53 @@ def on_buttonGoma_click():
     ColorSecundario = colorElegido
     btnColorSecundario["bg"]=colorElegido
 # Funcion Texto
+def agregarTexto(event):
+    # Función para agregar texto en la posición del clic
+    x, y = event.x, event.y
+
+    # Ventana emergente para ingresar el texto
+    ventana_texto = Toplevel(root)
+    ventana_texto.title("Ingresar Texto")
+    # Cuadro de selección de tamaño
+    tamano_label = Label(ventana_texto, text="Tamaño de letra:")
+    tamano_label.pack()
+    tamano = Combobox(ventana_texto, values=[10, 12, 14, 16, 18, 20])
+    tamano.pack()
+    fuente_label = Label(ventana_texto, text="Fuente:")
+    fuente_label.pack()
+    # Lista de fuentes comunes
+    fuentes_comunes = ["Arial", "Times New Roman", "Courier New", "Verdana"]
+    fuente = Combobox(ventana_texto, values=fuentes_comunes)
+    fuente.pack()
+    texto = Entry(ventana_texto)
+    texto.pack()
+
+    def insertarTexto():
+        global ColorPrincipal
+        texto_ingresado = texto.get()
+        tamano_letra = tamano.get()
+        fuente_letra = fuente.get()
+        canvas.create_text(x, y, text=texto_ingresado, font=(fuente_letra, tamano_letra), fill=ColorPrincipal,anchor=W)
+        ventana_texto.destroy()
+
+    boton_insertar = Button(ventana_texto, text="Insertar", command=insertarTexto)
+    boton_insertar.pack()
+
 def on_buttonTexto_click():
-    print("Texto")
+    canvas.unbind("<Button-1>")  # Desvincular otros eventos
+    canvas.bind("<Button-1>", agregarTexto)
+
 # Funcion colocar imagen
 def on_buttonImagen_click():
     print("Imagen")
 # Funcion Paleta de colores
 def on_buttonPaleta_click():
+    global paletaOn
+    if paletaOn == False:
+        paletaOn = True
+    elif paletaOn == True:
+        paletaOn = False
+        Paleta.destroy()
 
     print("Paleta de colores")
 
@@ -436,8 +524,7 @@ Frame2.grid(row=1,column=0)
 
 canvas = Canvas(Frame2 , height = 500 , width = 1300 , bg = "white")
 canvas.grid(row = 0   , column = 0)
-canvas.create_line(100,400 ,440,69)
-canvas.create_rectangle(100 , 100 , 200 , 200,fill="green")
+
 
 prevPiont = [0,0]
 currentPoint = [0,0]
@@ -458,7 +545,12 @@ def paint(event):
     #canvas.create_oval(x,y,x+20,y+20,fill="black")
 
     if prevPiont != [0,0]:
-        canvas.create_line(prevPiont[0],prevPiont[1],currentPoint[0],currentPoint[1],fill=ColorPrincipal)
+        global archivoOn 
+        if archivoOn == True:
+            canvas.create_line(prevPiont[0],prevPiont[1],currentPoint[0],currentPoint[1],fill=ColorPrincipal)
+        else:
+            canvas.create_line(prevPiont[0],prevPiont[1],currentPoint[0],currentPoint[1],fill=ColorPrincipal)
+            
     prevPiont = currentPoint
 
     if event.type == "5":

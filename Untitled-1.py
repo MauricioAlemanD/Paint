@@ -1,31 +1,35 @@
-from tkinter import *
+import tkinter as tk
+from tkinter import filedialog
 
-root = Tk()
-root.title("Vangogh")
-root.geometry("1300x600")
+def guardarArchivo(canvas):
+    print("Guardando")
+    file_path = filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPG files", "*.jpg")])
+    if file_path:
+        x = canvas.winfo_rootx()
+        y = canvas.winfo_rooty()
+        x1 = x + canvas.winfo_width()
+        y1 = y + canvas.winfo_height()
+        image = ImageGrab.grab((x, y, x1, y1))
+        image.save(file_path)
 
-Frame1 = Frame(root, height=100, width=1300, bg="gray")
+root = tk.Tk()
+Frame1 = tk.Frame(root, height=50, width=1300, bg="gray")
 Frame1.grid(row=0, column=0, sticky="NW")
+Frame2 = tk.Frame(root, height=500, width=1300, bg="white")
+Frame2.grid(row=1, column=0)
 
-toolsFrame = Frame(Frame1, height=100, width=100, bg="blue")
-toolsFrame.grid(row=0, column=0)
+canvas = tk.Canvas(Frame2, height=500, width=1300, bg="white")
+canvas.grid(row=0, column=0)
+canvas.create_line(100, 400, 440, 69)
+canvas.create_rectangle(100, 100, 200, 200, fill="green")
 
-# Función que se ejecutará cuando se haga clic en una opción del menú
-def opcion_menu():
-    # Puedes agregar la funcionalidad que desees aquí
-    pass
+# Crear el menú
+menu = tk.Menu(root)
+root.config(menu=menu)
+save_menu = tk.Menu(menu)
+menu.add_cascade(label="Archivo", menu=save_menu)
 
-# Crear un Menubutton en el marco toolsFrame
-menu_button = Menubutton(toolsFrame, text="Menú")
-menu_button.menu = Menu(menu_button)
-menu_button["menu"] = menu_button.menu
-
-# Agregar opciones al menú
-menu_button.menu.add_command(label="Abrir", command=opcion_menu)
-menu_button.menu.add_command(label="Guardar", command=opcion_menu)
-menu_button.menu.add_separator()
-menu_button.menu.add_command(label="Salir", command=root.quit)
-
-menu_button.grid(row=0, column=0)
+# Agregar una opción para guardar usando una función lambda
+save_menu.add_command(label="Guardar", command=lambda: guardarArchivo(canvas))
 
 root.mainloop()
