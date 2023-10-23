@@ -15,6 +15,10 @@ lapizOn = True
 gomaOn = False
 paletaOn = False
 archivoOn = False
+nImg = False
+
+posMX = 0
+posMY = 0
 
 # Creacion de las funciones abrir archivo y nuevo archivo
 
@@ -310,8 +314,29 @@ def on_buttonTexto_click():
     canvas.bind("<Button-1>", agregarTexto)
 
 # Funcion colocar imagen
-def on_buttonImagen_click():
+
+def posicion(event,canvas):
+    global paletaOn
+
+    file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.gif *.bmp *.ppm *.pgm")])
+    if file_path:
+        imagen = Image.open(file_path)
+        imagen = ImageTk.PhotoImage(imagen)
+        nuevo_canvas = Canvas(canvas, height=500, width=1300,)
+        nuevo_canvas.create_image(event.x, event.y, anchor=NW, image=imagen)
+        nuevo_canvas.imagen = imagen
+        if paletaOn:
+            nuevo_canvas.grid(row=0, column=1)
+        else:
+            nuevo_canvas.grid(row=0, column=0)
+        canvas.tag_lower(imagen)
+
+def on_buttonImagen_click(canva):
     print("Imagen")
+    canvas["cursor"] = "cross"
+    canvas.unbind("<Button-1>")
+    canvas.bind("<Button-1>", lambda event: posicion(event, canvas))
+
 # Funcion Paleta de colores
 def on_buttonPaleta_click():
     global paletaOn
@@ -467,7 +492,7 @@ btnGoma.grid(row=0,column=1)
 btnTexto = Button(Frame1,image=imgTexto,command=on_buttonTexto_click)
 btnTexto.grid(row=0,column=2)
 # Crear boton de imagen
-btnImagen = Button(Frame1,image=imgImagen,command=on_buttonImagen_click)
+btnImagen = Button(Frame1,image=imgImagen,command=lambda: on_buttonImagen_click(canvas))
 btnImagen.grid(row=0,column=3)
 # Crear boton de paleta de colores
 btnPaleta = Button(Frame1,image=imgPaleta,command=on_buttonPaleta_click)
